@@ -296,12 +296,14 @@ function App() {
             letterSpacing: "1px"
           }}
           onMouseOver={(e) => {
-            e.target.style.transform = "translateY(-2px)";
-            e.target.style.boxShadow = "0 12px 25px rgba(255, 215, 0, 0.4)";
+            const target = e.target as HTMLButtonElement;
+            target.style.transform = "translateY(-2px)";
+            target.style.boxShadow = "0 12px 25px rgba(255, 215, 0, 0.4)";
           }}
           onMouseOut={(e) => {
-            e.target.style.transform = "translateY(0)";
-            e.target.style.boxShadow = "0 8px 20px rgba(255, 215, 0, 0.3)";
+            const target = e.target as HTMLButtonElement;
+            target.style.transform = "translateY(0)";
+            target.style.boxShadow = "0 8px 20px rgba(255, 215, 0, 0.3)";
           }}
         >
           🎯 Generate Professional PDF
