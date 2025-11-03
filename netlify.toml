@@ -1,0 +1,4 @@
+[build]
+  base = "shop/project"
+  publish = "dist"
+  command = "npm install && npm run build"
