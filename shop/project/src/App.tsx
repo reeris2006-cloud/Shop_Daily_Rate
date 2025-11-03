@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { jsPDF } from "jspdf";
 
 function App() {
   const [goldRate, setGoldRate] = useState("6800");
@@ -24,58 +23,92 @@ function App() {
       return;
     }
 
-    const doc = new jsPDF("p", "mm", "a4"); // portrait A4
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Set canvas size (A4 proportions: 210x297mm, scaled to pixels)
+    canvas.width = 794;  // A4 width in pixels at 96 DPI
+    canvas.height = 1123; // A4 height in pixels at 96 DPI
 
-    const img = new Image();
-    img.src = "/shopimg.png"; // background image from public/
+    if (!ctx) {
+      alert('Canvas not supported');
+      return;
+    }
 
-    img.onload = () => {
-      // 🖼️ Draw full-page background
-      doc.addImage(img, "PNG", 0, 0, pageWidth, pageHeight);
+    const backgroundImg = new Image();
+    backgroundImg.src = "/shopimg.png";
 
-      // Use dynamic data from form inputs
-      doc.setFont("Girassol", "normal");
-      doc.setFontSize(32);
-      doc.setTextColor(233, 201, 102);
-      doc.text(goldRate, 80, 142); // Dynamic gold rate
-      doc.setTextColor(233, 240, 243);
-      doc.text(silverRate, 80, 165); // Dynamic silver rate
-      doc.setFont("Girassol", "normal");
-      doc.setFontSize(32);
-      doc.setTextColor(191, 236, 172);
-      doc.text(selectedDate, 30, 190); // Dynamic date
-      doc.text(dayOfWeek, 34, 210); // Dynamic day
+    backgroundImg.onload = () => {
+      // Draw background image
+      ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
 
-      doc.save("AML_Jewellery_Background.pdf");
+      // Set text properties and add dynamic content
+      ctx.font = 'bold 48px Girassol';
+      ctx.fillStyle = '#E9C966'; // Gold color
+      ctx.fillText(goldRate, 300, 540); // Gold rate position
+
+      ctx.fillStyle = '#E9F0F3'; // Silver color  
+      ctx.fillText(silverRate, 300, 625); // Silver rate position
+
+      ctx.fillStyle = '#BFECAC'; // Date color
+      ctx.fillText(selectedDate, 115, 720); // Date position
+      ctx.fillText(dayOfWeek, 130, 795); // Day position
+
+      // Convert canvas to image and download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'AML_Jewellery_Rates.png';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      }, 'image/png');
     };
 
-    img.onerror = () => {
-      // Fallback: create PDF without background image
-      console.log("Image not found, creating PDF without background");
+    backgroundImg.onerror = () => {
+      // Fallback: create image without background
+      console.log("Background image not found, creating image with solid background");
       
-      // Create a simple colored background
-      doc.setFillColor(139, 21, 56); // maroon color
-      doc.rect(0, 0, pageWidth, pageHeight, 'F');
+      // Create gradient background
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, '#8B1538');
+      gradient.addColorStop(0.5, '#4A0E1A');
+      gradient.addColorStop(1, '#2C0A12');
+      
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Add text content with dynamic data
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(22);
-      doc.setTextColor(255, 255, 255);
-      doc.text("AML ஜுவல்லர்ஸ்", 20, 30);
+      // Add text content
+      ctx.font = 'bold 36px Arial';
+      ctx.fillStyle = '#FFD700';
+      ctx.fillText('AML ஜுவல்லர்ஸ்', 50, 80);
 
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(14);
-      doc.text("Today's Readymade Rate", 20, 50);
-      doc.text(`Gold Per Gram: ₹ ${goldRate}`, 20, 65);
-      doc.text(`Silver Per Gram: ₹ ${silverRate}`, 20, 80);
-      doc.text(`Date: ${selectedDate} (${dayOfWeek})`, 20, 95);
-      doc.text("Phone: 9443555256, 9994114147", 20, 110);
-      doc.text("279, மேலராதவீதி, 50, கூலக்கடைப்பஜார்,", 20, 125);
-      doc.text("திருநெல்வேலி டவுண்.", 20, 140);
+      ctx.font = '24px Arial';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillText("Today's Readymade Rate", 50, 130);
+      ctx.fillText(`Gold Per Gram: ₹ ${goldRate}`, 50, 180);
+      ctx.fillText(`Silver Per Gram: ₹ ${silverRate}`, 50, 230);
+      ctx.fillText(`Date: ${selectedDate} (${dayOfWeek})`, 50, 280);
+      ctx.fillText('Phone: 9443555256, 9994114147', 50, 330);
+      ctx.fillText('279, மேலராதவீதி, திருநெல்வேலி டவுண்', 50, 380);
 
-      doc.save("AML_Jewellery_Background.pdf");
+      // Convert canvas to image and download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'AML_Jewellery_Rates.png';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      }, 'image/png');
     };
   };
 
@@ -306,7 +339,7 @@ function App() {
             target.style.boxShadow = "0 8px 20px rgba(255, 215, 0, 0.3)";
           }}
         >
-          🎯 Generate Professional PDF
+          🎯 Generate Professional Image
         </button>
 
         {/* Footer Info */}
