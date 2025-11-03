@@ -17,12 +17,7 @@ function App() {
     }
   };
 
-  const handleDownload = () => {
-    if (!goldRate || !silverRate || !selectedDate) {
-      alert('Please fill in all fields before downloading');
-      return;
-    }
-
+  const generateImage = (callback: (blob: Blob) => void) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
@@ -54,17 +49,10 @@ function App() {
       ctx.fillText(selectedDate, 115, 720); // Date position
       ctx.fillText(dayOfWeek, 130, 795); // Day position
 
-      // Convert canvas to image and download
+      // Convert canvas to blob
       canvas.toBlob((blob) => {
         if (blob) {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'AML_Jewellery_Rates.png';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
+          callback(blob);
         }
       }, 'image/png');
     };
@@ -96,20 +84,76 @@ function App() {
       ctx.fillText('Phone: 9443555256, 9994114147', 50, 330);
       ctx.fillText('279, மேலராதவீதி, திருநெல்வேலி டவுண்', 50, 380);
 
-      // Convert canvas to image and download
+      // Convert canvas to blob
       canvas.toBlob((blob) => {
         if (blob) {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'AML_Jewellery_Rates.png';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
+          callback(blob);
         }
       }, 'image/png');
     };
+  };
+
+  const handleDownload = () => {
+    if (!goldRate || !silverRate || !selectedDate) {
+      alert('Please fill in all fields before downloading');
+      return;
+    }
+
+    generateImage((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'AML_Jewellery_Rates.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  };
+
+  const handleWhatsAppShare = () => {
+    if (!goldRate || !silverRate || !selectedDate) {
+      alert('Please fill in all fields before sharing');
+      return;
+    }
+
+    // Create message text for WhatsApp
+    const message = `🏆 *AML ஜுவல்லர்ஸ்* 🏆
+
+📅 *Today's Rates - ${selectedDate} (${dayOfWeek})*
+
+🥇 *Gold Rate:* ₹${goldRate} per gram
+🥈 *Silver Rate:* ₹${silverRate} per gram
+
+📞 *Contact Us:*
+9443555256, 9994114147
+
+📍 *Address:*
+279, மேலராதவீதி, திருநெல்வேலி டவுண்
+
+#GoldRate #SilverRate #AMLJewellers #திருநெல்வேலி`;
+
+    // For mobile devices, try to share with Web Share API first
+    if (navigator.share && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      generateImage((blob) => {
+        const file = new File([blob], 'AML_Jewellery_Rates.png', { type: 'image/png' });
+        
+        navigator.share({
+          title: 'AML Jewellers - Today\'s Rates',
+          text: message,
+          files: [file]
+        }).catch((error) => {
+          console.log('Error sharing:', error);
+          // Fallback to WhatsApp URL
+          const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+          window.open(whatsappUrl, '_blank');
+        });
+      });
+    } else {
+      // For desktop or if Web Share API is not available, use WhatsApp Web
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
+    }
   };
 
   return (
@@ -182,7 +226,7 @@ function App() {
             fontSize: "0.9rem",
             margin: "0"
           }}>
-            Fill in the current market rates to generate your PDF
+            Fill in the current market rates to download or share
           </p>
         </div>
 
@@ -310,37 +354,72 @@ function App() {
           </div>
         </div>
 
-        {/* Generate Button */}
-        <button
-          onClick={handleDownload}
-          style={{
-            width: "100%",
-            padding: "18px 20px",
-            fontSize: "18px",
-            fontWeight: "700",
-            cursor: "pointer",
-            border: "none",
-            borderRadius: "15px",
-            background: "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)",
-            color: "#2C0A12",
-            transition: "all 0.3s ease",
-            boxShadow: "0 8px 20px rgba(255, 215, 0, 0.3)",
-            textTransform: "uppercase",
-            letterSpacing: "1px"
-          }}
-          onMouseOver={(e) => {
-            const target = e.target as HTMLButtonElement;
-            target.style.transform = "translateY(-2px)";
-            target.style.boxShadow = "0 12px 25px rgba(255, 215, 0, 0.4)";
-          }}
-          onMouseOut={(e) => {
-            const target = e.target as HTMLButtonElement;
-            target.style.transform = "translateY(0)";
-            target.style.boxShadow = "0 8px 20px rgba(255, 215, 0, 0.3)";
-          }}
-        >
-          🎯 Generate Professional Image
-        </button>
+        {/* Action Buttons */}
+        <div style={{ display: "flex", gap: "15px", flexDirection: "column" }}>
+          {/* Generate Button */}
+          <button
+            onClick={handleDownload}
+            style={{
+              width: "100%",
+              padding: "18px 20px",
+              fontSize: "18px",
+              fontWeight: "700",
+              cursor: "pointer",
+              border: "none",
+              borderRadius: "15px",
+              background: "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)",
+              color: "#2C0A12",
+              transition: "all 0.3s ease",
+              boxShadow: "0 8px 20px rgba(255, 215, 0, 0.3)",
+              textTransform: "uppercase",
+              letterSpacing: "1px"
+            }}
+            onMouseOver={(e) => {
+              const target = e.target as HTMLButtonElement;
+              target.style.transform = "translateY(-2px)";
+              target.style.boxShadow = "0 12px 25px rgba(255, 215, 0, 0.4)";
+            }}
+            onMouseOut={(e) => {
+              const target = e.target as HTMLButtonElement;
+              target.style.transform = "translateY(0)";
+              target.style.boxShadow = "0 8px 20px rgba(255, 215, 0, 0.3)";
+            }}
+          >
+            📥 Download Image
+          </button>
+
+          {/* WhatsApp Share Button */}
+          <button
+            onClick={handleWhatsAppShare}
+            style={{
+              width: "100%",
+              padding: "18px 20px",
+              fontSize: "18px",
+              fontWeight: "700",
+              cursor: "pointer",
+              border: "none",
+              borderRadius: "15px",
+              background: "linear-gradient(135deg, #25D366 0%, #128C7E 100%)",
+              color: "#FFFFFF",
+              transition: "all 0.3s ease",
+              boxShadow: "0 8px 20px rgba(37, 211, 102, 0.3)",
+              textTransform: "uppercase",
+              letterSpacing: "1px"
+            }}
+            onMouseOver={(e) => {
+              const target = e.target as HTMLButtonElement;
+              target.style.transform = "translateY(-2px)";
+              target.style.boxShadow = "0 12px 25px rgba(37, 211, 102, 0.4)";
+            }}
+            onMouseOut={(e) => {
+              const target = e.target as HTMLButtonElement;
+              target.style.transform = "translateY(0)";
+              target.style.boxShadow = "0 8px 20px rgba(37, 211, 102, 0.3)";
+            }}
+          >
+            📱 Share on WhatsApp
+          </button>
+        </div>
 
         {/* Footer Info */}
         <div style={{
