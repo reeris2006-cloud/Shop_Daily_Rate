@@ -33,8 +33,8 @@ export default defineConfig({
     include: ['jspdf', 'react', 'react-dom']
   },
   
-  // Asset handling
-  assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.pdf'],
+  // ✅ Asset handling (include _redirects file)
+  assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.pdf', '_redirects'],
   
   // Define global constants
   define: {
